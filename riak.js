@@ -208,7 +208,8 @@ function RiakRequest(client, bucket, key, options, callback) {
     this.should_parse = this.options.parse !== false;
     this.should_retry = this.options.retry !== false;
     this.resolver = this.options.resolver || null;
-    this.debug_mode = this.client.debug_mode;
+    this.bucket_resource = this.options.bucket_resource || "keys";
+	this.debug_mode = this.client.debug_mode;
     this.vclock = null;
     this.bk_str = client.fmt_bk(bucket, key);
 
@@ -267,7 +268,7 @@ RiakRequest.prototype.do_request = function () {
     }
 
     pool_options = {
-        path: "/buckets/" + encodeURIComponent(this.bucket) + "/keys/" + encodeURIComponent(this.key) + qs,
+        path: "/buckets/" + encodeURIComponent(this.bucket) + "/" + this.bucket_resource + "/" + this.key + qs,
         headers: this.client.headers(this.options.http_headers),
         retry_not_found: this.should_retry
     };
@@ -292,7 +293,7 @@ RiakRequest.prototype.handle_resolved = function (new_value, new_headers, should
 
     // We need to build up at least the headers portion of this for GET and PUT, because client might be doing a GET in order to PUT
     pool_options = {
-        path: "/buckets/" + encodeURIComponent(this.bucket) + "/keys/" + encodeURIComponent(this.key) + "?returnbody=true",
+        path: "/buckets/" + encodeURIComponent(this.bucket) + "/" + this.bucket_resource + "/" + this.key + "?returnbody=true",
         headers: this.client.headers(new_headers),
         retry_not_found: this.should_retry
     };
@@ -556,7 +557,7 @@ RiakClient.prototype.del = function (bucket, key, callback) {
     var self = this;
 
     this.pool.del({
-        path: "/buckets/" + encodeURIComponent(bucket) + "/keys/" + encodeURIComponent(key),
+        path: "/buckets/" + encodeURIComponent(bucket) + "/" + this.bucket_resource + "/" + key,
         headers: {
             "X-Riak-ClientId": this.client_id,
             "Connection": "close"   // Riak and node have a keepalive-related bug around HTTP DELETE
@@ -644,6 +645,16 @@ RiakClient.prototype.solr = function (bucket, query, limit, callback) {
             return callback(null, res, {error: "non-JSON: " + body});
         }
     });
+};
+
+RiakClient.prototype.get_index = function (bucket, index, start, end, options, callback) {
+    options.method = "get";
+	options.bucket_resource = "index"
+	var index_path = index + "/" + start;
+	if (end) {
+		index_path += "/" + end;
+	}
+    return new RiakRequest(this, bucket, index_path, options, callback);
 };
 
 module.exports = RiakClient;
