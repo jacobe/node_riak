@@ -267,7 +267,7 @@ RiakRequest.prototype.do_request = function () {
     }
 
     pool_options = {
-        path: "/riak/" + encodeURIComponent(this.bucket) + "/" + encodeURIComponent(this.key) + qs,
+        path: "/buckets/" + encodeURIComponent(this.bucket) + "/keys/" + encodeURIComponent(this.key) + qs,
         headers: this.client.headers(this.options.http_headers),
         retry_not_found: this.should_retry
     };
@@ -292,7 +292,7 @@ RiakRequest.prototype.handle_resolved = function (new_value, new_headers, should
 
     // We need to build up at least the headers portion of this for GET and PUT, because client might be doing a GET in order to PUT
     pool_options = {
-        path: "/riak/" + encodeURIComponent(this.bucket) + "/" + encodeURIComponent(this.key) + "?returnbody=true",
+        path: "/buckets/" + encodeURIComponent(this.bucket) + "/keys/" + encodeURIComponent(this.key) + "?returnbody=true",
         headers: this.client.headers(new_headers),
         retry_not_found: this.should_retry
     };
@@ -556,7 +556,7 @@ RiakClient.prototype.del = function (bucket, key, callback) {
     var self = this;
 
     this.pool.del({
-        path: "/riak/" + encodeURIComponent(bucket) + "/" + encodeURIComponent(key),
+        path: "/buckets/" + encodeURIComponent(bucket) + "/keys/" + encodeURIComponent(key),
         headers: {
             "X-Riak-ClientId": this.client_id,
             "Connection": "close"   // Riak and node have a keepalive-related bug around HTTP DELETE
